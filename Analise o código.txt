@@ -1,0 +1,68 @@
+#include <math.h>
+#include <stdbool.h>
+
+// Função para calcular a distância entre duas posições
+double calcular_distancia(int x1, int y1, int x2, int y2) {
+    return sqrt(pow(x2 - x1, 2) + pow(y2 - y1, 2));
+}
+
+// Função para verificar se a nova posição é válida, com base na distância mínima
+bool posicao_valida(int x, int y, int faccoes_x[], int faccoes_y[], int num_faccoes, int distancia_minima) {
+    for (int i = 0; i < num_faccoes; i++) {
+        if (calcular_distancia(x, y, faccoes_x[i], faccoes_y[i]) < distancia_minima) {
+            return false;
+        }
+    }
+    return true;
+}
+
+void posicionar_faccoes_aleatoriamente(char **area, Tfaccao *lista_faccoes, int n, int m, int distancia_minima) {
+    Tfaccao *atual = lista_faccoes;
+    int faccoes_x[100];  // Array para armazenar as coordenadas X das facções já colocadas
+    int faccoes_y[100];  // Array para armazenar as coordenadas Y das facções já colocadas
+    int num_faccoes = 0;
+
+    srand(time(NULL));
+
+    while (atual != NULL) {
+        int x, y;
+        do {
+            x = rand() % n;  // Gera uma posição aleatória em x
+            y = rand() % m;  // Gera uma posição aleatória em y
+        } while (!posicao_valida(x, y, faccoes_x, faccoes_y, num_faccoes, distancia_minima));
+
+        // Posiciona a facção na matriz
+        area[x][y] = atual->letra;
+        faccoes_x[num_faccoes] = x;  // Armazena a posição da facção
+        faccoes_y[num_faccoes] = y;
+        num_faccoes++;
+
+        atual = atual->prox;  // Vai para a próxima facção
+    }
+}
+
+
+
+
+
+void posicionar_faccoes(char **area, Tfaccao *lista_faccoes, int n, int m, int f) {
+    int faccoes_por_linha = sqrt(f);  // Quantidade de facções por linha da grade
+    int bloco_tamanho_x = n / faccoes_por_linha;  // Tamanho do bloco em linhas
+    int bloco_tamanho_y = m / faccoes_por_linha;  // Tamanho do bloco em colunas
+
+    Tfaccao *atual = lista_faccoes;
+    int linha, coluna;
+    
+    for (int i = 0; i < faccoes_por_linha; i++) {
+        for (int j = 0; j < faccoes_por_linha; j++) {
+            if (atual != NULL) {
+                // Posiciona a facção no centro de cada bloco
+                linha = (i * bloco_tamanho_x) + bloco_tamanho_x / 2;
+                coluna = (j * bloco_tamanho_y) + bloco_tamanho_y / 2;
+                area[linha][coluna] = atual->letra;  // Marca a facção com a letra correspondente
+                atual = atual->prox;  // Vai para a próxima facção
+            }
+        }
+    }
+}
+

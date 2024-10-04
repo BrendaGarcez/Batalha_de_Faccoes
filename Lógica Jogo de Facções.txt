@@ -1,0 +1,34 @@
+Lógica Jogo de Facções 
+*************************************************************************
+&&&DEIXAR COLORIDOOOOO
+
+Tamanho do campo informado pelo usuário:
+Limitações: campo não pode ser menor que 9 x 9(Para que haja jogabilidade)
+*************************************************************************
+
+Quantidade de facções informada pelo usuário:
+limitações: Não pode haver menos de 2 facções
+sendo o calculo por área de = área do mapa(n*m) / área mínima por facção(15)
+*************************************************************************
+
+Nome de cada facção informada pelo usuário: 
+para definir qual o digito depositado na matriz
+*************************************************************************
+
+Matriz da área:
+dispostos pela matriz 3 tipos de terrenos, alternando entre si por porcentagens
+Floresta: Com maior dificuldade de conseguir recurso, mais recursos
+	>>>>> Randomização de 40% e 15 de recursos, pontos de poder 15 
+Planície: maior facilidade menos recursos
+	>>>>> 5 de recursos, pontos de poder 1
+Montanha: Dificulta movimentação
+        >>>>> Não permite pontos de poder
+*************************************************************************
+
+Matriz inicial:
+Deposita todas as facções citadas na matriz principal
+de forma que fiquem distantes um do outro;
+>>>>Utilizara a letra de cada nome de faccao
+
+*************************************************************************
+&&&&&lutas->quem tiver mais pontos ganha a área e 2 ponto de poder,
