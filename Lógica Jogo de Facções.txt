@@ -1,34 +1,140 @@
-Lógica Jogo de Facções 
-*************************************************************************
-&&&DEIXAR COLORIDOOOOO
 
-Tamanho do campo informado pelo usuário:
-Limitações: campo não pode ser menor que 9 x 9(Para que haja jogabilidade)
-*************************************************************************
+# ⚔️ Jogo de Estratégia por Turnos – Facções, Unidades e Domínio Territorial
 
-Quantidade de facções informada pelo usuário:
-limitações: Não pode haver menos de 2 facções
-sendo o calculo por área de = área do mapa(n*m) / área mínima por facção(15)
-*************************************************************************
+Este é um jogo de estratégia em linguagem C, baseado em turnos, onde facções disputam o domínio de um mapa gerado aleatoriamente. A jogabilidade inclui movimentação, combate, construção de edifícios, alianças diplomáticas e até mesmo facções controladas automaticamente por bots!
 
-Nome de cada facção informada pelo usuário: 
-para definir qual o digito depositado na matriz
-*************************************************************************
+---
 
-Matriz da área:
-dispostos pela matriz 3 tipos de terrenos, alternando entre si por porcentagens
-Floresta: Com maior dificuldade de conseguir recurso, mais recursos
-	>>>>> Randomização de 40% e 15 de recursos, pontos de poder 15 
-Planície: maior facilidade menos recursos
-	>>>>> 5 de recursos, pontos de poder 1
-Montanha: Dificulta movimentação
-        >>>>> Não permite pontos de poder
-*************************************************************************
+## 📏 Configuração Inicial
 
-Matriz inicial:
-Deposita todas as facções citadas na matriz principal
-de forma que fiquem distantes um do outro;
->>>>Utilizara a letra de cada nome de faccao
+### Tamanho do Campo
 
-*************************************************************************
-&&&&&lutas->quem tiver mais pontos ganha a área e 2 ponto de poder,
+- O jogador define as dimensões do mapa.
+- **Limite mínimo:** `9 x 9` (para garantir jogabilidade).
+  
+### Quantidade de Facções
+
+- O jogador define o número de facções.
+- **Limite mínimo:** `2 facções`.
+- **Cálculo máximo recomendado:**  
+  ```c
+  número máximo de facções = área do mapa (n * m) / 15
+  ```
+
+### Nome das Facções
+
+- Cada facção recebe um **nome personalizado**.
+- A **primeira letra do nome** é usada como identificador na matriz.
+- Facções com letras repetidas são diferenciadas por **cor**.
+
+---
+
+## 🌍 Geração do Mapa
+
+O mapa é uma matriz com células que representam terrenos. A geração é aleatória, com base nas seguintes porcentagens:
+
+### Tipos de Terreno:
+
+- **Floresta (`F`)**
+  - 40% do mapa
+  - Recurso: 15 unidades
+  - Pontos de Poder: 15
+  - Movimentação: moderada dificuldade
+- **Planície (`P`)**
+  - Recurso: 5 unidades
+  - Pontos de Poder: 1
+  - Movimentação: fácil
+- **Montanha (`M`)**
+  - Recurso: 0
+  - Pontos de Poder: 0
+  - Movimentação: difícil ou bloqueada para algumas unidades
+
+---
+
+## 🧭 Posição Inicial das Facções
+
+- As facções são inseridas automaticamente no mapa.
+- O algoritmo garante que fiquem **espalhadas e distantes** entre si.
+- Cada facção aparece na matriz com a **letra inicial do seu nome**.
+
+---
+
+## ⚔️ Mecânicas de Combate
+
+### Sistema de Lutas
+
+- Quando duas unidades inimigas se encontram, ocorre um **combate direto**.
+- **Quem tiver mais pontos de poder vence** o combate.
+- O vencedor:
+  - **Ganha a área ocupada**.
+  - **Recebe +2 pontos de poder**.
+
+---
+
+## 🤖 Facções Automáticas (Bots)
+
+- Facções podem ser controladas por jogadores ou bots.
+- Bots tomam decisões a cada turno:
+  - Expandir território
+  - Atacar inimigos vulneráveis
+  - Construir edifícios
+  - Formar ou trair alianças
+
+---
+
+## 🎯 Objetivos e Condições de Vitória
+
+- **Poder Supremo**: atingir um número alvo de pontos de poder.
+- **Dominação Territorial**: eliminar 70% das outras facções.
+- **Vitória Diplomática**: formar uma aliança estável com X facções.
+
+---
+
+## 🗺️ Mapa e Exploração
+
+- Terrenos gerados aleatoriamente com regras específicas.
+- **Fog of War**: áreas desconhecidas são ocultas, exceto onde há unidades ou aliados.
+- **Recursos Especiais** podem estar escondidos no mapa.
+
+---
+
+## 🤝 Alianças e Diplomacia
+
+- Facções podem formar **alianças diplomáticas**.
+- Benefícios:
+  - Compartilhamento da visão do mapa
+  - Proteção mútua de construções
+- Alianças têm duração (ex: 5 turnos) e podem ser rompidas.
+
+---
+
+## 🏛️ Edifícios
+
+- Facções podem construir:
+  - `R`: Edifício de Recursos
+  - `T`: Campo de Treinamento
+  - `L`: Laboratório de Pesquisa
+- Edifícios podem ser **conquistados ou destruídos**.
+- É necessário defendê-los de ataques inimigos.
+
+---
+
+## 👥 Unidades e Habilidades
+
+### Tipos de Unidade
+
+- **Soldado**: combate direto, ideal para planícies.
+- **Explorador**: longo alcance, revela neblina.
+- **Engenheiro**: construtor de edifícios, pode melhorar terrenos.
+- **Mago / Cientista**: habilidades especiais (ex: dano em área, visão, buffs/debuffs).
+
+### Regras de Movimentação
+
+- Cada unidade possui **X movimentos por turno**.
+- Terrenos afetam mobilidade:
+  - Montanhas bloqueiam soldados, mas não exploradores.
+
+### Criação de Unidades
+
+- Feita em Campos de Treinamento (`T`)
+- Requer **recursos** e **tempo de produção** (ex: 2 turnos)
