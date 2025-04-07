@@ -53,12 +53,19 @@ typedef struct faccao {
     Taliancas *proxalianca;
 } Tfaccao;
 
-/// Funções
+// Funções de mapa e memória
 void distribuir_aleatoriamente(char **area, int n, int m);
-void exibir_faccoes(Tfaccao *lista_faccoes);
-void adicionar_faccao(Tfaccao **lista_faccoes, char **area, int n, int m);
 void desalocar(char ***area, int n, int m);
+
+// Funções de facção
+void adicionar_faccao(Tfaccao **lista_faccoes, char **area, int n, int m);
+void exibir_faccoes_coloridas(Tfaccao *lista_faccoes);
 void mover_faccao(Tfaccao *faccao, char **area, int n, int m, int direcao);
+void liberar_faccoes(Tfaccao *faccoes);
+void adicionar_edificio(Tfaccao *faccao, char **area, int n, int m);
+
+// Função auxiliar
+int contar_letra_usada(Tfaccao *lista, char letra);
 
 int main(){
     int n = 0, m = 0, i = 0, j = 0;
@@ -84,8 +91,8 @@ int main(){
         adicionar_faccao(&faccoes, area, n, m);
     }
 
-    system("cls || clear");  // cross-platform clear
-    exibir_faccoes(faccoes);
+    system("cls || clear"); 
+    exibir_faccoes_coloridas(faccoes);
 
     //// Mostrar mapa
     printf("\nMapa Inicial:\n");
@@ -151,11 +158,13 @@ int main(){
                 break;
         }
     }
-
-    //// Desalocar matriz
+    //Encerramento
+    liberar_faccoes(faccoes);
     desalocar(&area, n, m);
     if(area != NULL){
         printf("Desalocar deu errado!");
+    } else {
+        printf("\nMemória liberada com sucesso. Até logo!\n");
     }
     return 0;
 }
@@ -264,8 +273,11 @@ void exibir_faccoes_coloridas(Tfaccao *lista_faccoes) {
 void adicionar_edificio(Tfaccao *faccao, char **area, int n, int m) {
     if (faccao == NULL) return;
 
-    printf("Deseja construir algo na nova posição (%d,%d)?\n", faccao->x, faccao->y);
-    printf("1 - Edificio de Recursos\n2 - Campo de Treinamento\n3 - Laboratorio de Pesquisa\n0 - Nada\n");
+    printf("\nDeseja construir algo na nova posição (%d, %d)?\n", f->x, f->y);
+    printf("1 - Edificio de Recursos (R)\n");
+    printf("2 - Campo de Treinamento (T)\n");
+    printf("3 - Laboratorio de Pesquisa (L)\n");
+    printf("0 - Nada\n");
     int tipo;
     scanf("%d", &tipo);
 
@@ -281,23 +293,18 @@ void adicionar_edificio(Tfaccao *faccao, char **area, int n, int m) {
     novo->prox = faccao->proxedificio;
     faccao->proxedificio = novo;
 
-
-    // Se quiser, você pode alterar o mapa para marcar com um símbolo de edifício, tipo 'E'
-    area[novo->x][novo->y] = 'E';
-    printf("Construção realizada com sucesso!\n");
-}
-
-
-/// Exibir facções
-
-/// Libera memória da matriz
-void desalocar(char ***area, int n, int m){
-    for(int i = 0; i < n; i++){
-        free((*area)[i]);
+    char letra;
+    switch (tipo) {
+        case 1: letra = 'R'; break;
+        case 2: letra = 'T'; break;
+        case 3: letra = 'L'; break;
     }
-    free(*area);
-    *area = NULL;
+    
+    // Se quiser, você pode alterar o mapa para marcar com um símbolo de edifício, tipo 'E'
+    area[novo->x][novo->y] = letra;
+    printf("Construção concluída! Edifício [%c]\n", letra);
 }
+
 
 /// Movimento de facção
 void mover_faccao(Tfaccao *faccao, char **area, int n, int m, int direcao) {
@@ -345,4 +352,42 @@ void mover_faccao(Tfaccao *faccao, char **area, int n, int m, int direcao) {
     } else {
         printf("Terreno ocupado! Movimento cancelado.\n");
     }
+}
+void liberar_faccoes(Tfaccao *faccoes) {
+    while (faccoes != NULL) {
+        Tfaccao *temp = faccoes;
+        faccoes = faccoes->prox;
+
+        // Libera unidades
+        while (temp->proxunidade != NULL) {
+            Tunidade *u = temp->proxunidade;
+            temp->proxunidade = u->prox;
+            free(u);
+        }
+
+        // Libera edificios
+        while (temp->proxedificio != NULL) {
+            Tedificio *e = temp->proxedificio;
+            temp->proxedificio = e->prox;
+            free(e);
+        }
+
+        // Libera aliancas
+        while (temp->proxalianca != NULL) {
+            Taliancas *a = temp->proxalianca;
+            temp->proxalianca = a->prox;
+            free(a);
+        }
+
+        free(temp);
+    }
+}
+
+/// Libera memória da matriz
+void desalocar(char ***area, int n, int m){
+    for(int i = 0; i < n; i++){
+        free((*area)[i]);
+    }
+    free(*area);
+    *area = NULL;
 }
