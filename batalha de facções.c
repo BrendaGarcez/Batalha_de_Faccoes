@@ -1,8 +1,10 @@
+#include <windows.h> 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
 
+// Códigos de cores para exibição
 #define RESET   "\033[0m"
 #define RED     "\033[1;31m"
 #define GREEN   "\033[1;32m"
@@ -11,13 +13,14 @@
 #define MAGENTA "\033[1;35m"
 #define CYAN    "\033[1;36m"
 
-#include <windows.h> // Para cores no Windows
 
-// Função para definir cor (apenas no Windows)
+// Função para definir cor (Windows)
 void definir_cor(int cor) {
     SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), cor);
 }
+
 // Estruturas de representação
+
 typedef struct unidade {
     int x;
     int y;
@@ -40,6 +43,7 @@ typedef struct aliancas {
 typedef struct faccao {
     char letra;
     char nome[15];
+    int cor;
     int pontos_recurso;
     int pontos_poder;
     int x, y; 
@@ -171,28 +175,19 @@ void distribuir_aleatoriamente(char **area, int n, int m) {
     }
 
     srand(time(NULL));
-    while (qtd_p > 0) {
+    while (qtd_p > 0 || qtd_f > 0 || qtd_m > 0) {
         i = rand() % n;
         j = rand() % m;
-        if (area[i][j] == ' ') {
+        if (area[i][j] != ' ') continue;
+
+        int tipo = rand() % 100;
+        if (tipo < 50 && qtd_p > 0) {
             area[i][j] = 'P';
             qtd_p--;
-        }
-    }
-
-    while (qtd_f > 0) {
-        i = rand() % n;
-        j = rand() % m;
-        if (area[i][j] == ' ') {
+        } else if (tipo < 80 && qtd_f > 0) {
             area[i][j] = 'F';
             qtd_f--;
-        }
-    }
-
-    while (qtd_m > 0) {
-        i = rand() % n;
-        j = rand() % m;
-        if (area[i][j] == ' ') {
+        } else if (qtd_m > 0) {
             area[i][j] = 'M';
             qtd_m--;
         }
@@ -218,9 +213,9 @@ void adicionar_faccao(Tfaccao **lista_faccoes, char **area, int n, int m){
     printf("Digite o nome da faccao: ");
     scanf("%s", nova->nome);
 
-    nova->letra = nova->nome[0];  // Primeira letra do nome
-    int repeticoes = contar_letra_usada(*lista_faccoes, nova->letra);
-    int cor = 9 + repeticoes % 6; // Varia de 9 a 14 (cores diferentes)
+    nova->letra = nova->nome[0];
+    int rep = contar_letra_usada(*lista_faccoes, nova->letra);
+    nova->cor = 9 + rep % 6; // Varia de 9 a 14 (cores diferentes)
 
     int x, y;
     do {
@@ -232,16 +227,13 @@ void adicionar_faccao(Tfaccao **lista_faccoes, char **area, int n, int m){
     nova->y = y;
     nova->pontos_recurso = 24;
     nova->pontos_poder = 0;
-    nova->prox = NULL;
     nova->proxunidade = NULL;
     nova->proxedificio = NULL;
     nova->proxalianca = NULL;
+    nova->prox = NULL;
 
     area[x][y] = nova->letra;
-
-    // Salvar cor extra (usaremos um campo novo ou outra estrutura para isso)
-    // Aqui simplificado apenas para saída colorida na exibição
-
+    
     // Inserir na lista encadeada
     if (*lista_faccoes == NULL) {
         *lista_faccoes = nova;
@@ -251,22 +243,52 @@ void adicionar_faccao(Tfaccao **lista_faccoes, char **area, int n, int m){
         temp->prox = nova;
     }
 }
-
-/// Exibir facções
-void exibir_faccoes(Tfaccao *lista_faccoes) {
+void exibir_faccoes_coloridas(Tfaccao *lista_faccoes) {
     Tfaccao *atual = lista_faccoes;
+    int index = 0;
+    while(atual != NULL ){
+        if (atual == NULL) {
+            printf("Nenhuma faccao na lista.\n");
+            return;
+        }
+        int cor = 9 + index % 6;
+        definir_cor(cor);
+        printf("Letra: [%c], Nome: %s, Pontos de Recurso: %d, Pontos de Poder: %d\n", atual->letra,
+               atual->nome, atual->pontos_recurso, atual->pontos_poder);
+        definir_cor(7);
+        atual = atual->prox;
+        index++;
+    }
+}
 
-    if (atual == NULL) {
-        printf("Nenhuma faccao na lista.\n");
+void adicionar_edificio(Tfaccao *faccao, char **area, int n, int m) {
+    if (faccao == NULL) return;
+
+    printf("Deseja construir algo na nova posição (%d,%d)?\n", faccao->x, faccao->y);
+    printf("1 - Edificio de Recursos\n2 - Campo de Treinamento\n3 - Laboratorio de Pesquisa\n0 - Nada\n");
+    int tipo;
+    scanf("%d", &tipo);
+
+    if (tipo < 1 || tipo > 3) {
+        printf("Nenhuma construção feita.\n");
         return;
     }
 
-    while (atual != NULL) {
-        printf("Letra: [%c], Nome: %s, Pontos de Recurso: %d, Pontos de Poder: %d\n", atual->letra,
-               atual->nome, atual->pontos_recurso, atual->pontos_poder);
-        atual = atual->prox;
-    }
+    Tedificio *novo = (Tedificio *)malloc(sizeof(Tedificio));
+    novo->x = faccao->x;
+    novo->y = faccao->y;
+    novo->tipo = tipo;
+    novo->prox = faccao->proxedificio;
+    faccao->proxedificio = novo;
+
+
+    // Se quiser, você pode alterar o mapa para marcar com um símbolo de edifício, tipo 'E'
+    area[novo->x][novo->y] = 'E';
+    printf("Construção realizada com sucesso!\n");
 }
+
+
+/// Exibir facções
 
 /// Libera memória da matriz
 void desalocar(char ***area, int n, int m){
@@ -279,6 +301,7 @@ void desalocar(char ***area, int n, int m){
 
 /// Movimento de facção
 void mover_faccao(Tfaccao *faccao, char **area, int n, int m, int direcao) {
+    if (!f) return;
     int novo_x = faccao->x;
     int novo_y = faccao->y;
 
@@ -292,28 +315,34 @@ void mover_faccao(Tfaccao *faccao, char **area, int n, int m, int direcao) {
             return;
     }
 
-    if(novo_x >= 0 && novo_x < n && novo_y >= 0 && novo_y < m) {
-        char terreno = area[novo_x][novo_y];
-        if (terreno == 'P' || terreno == 'F' || terreno == 'M') {
-             if (terreno == 'P') {
-                faccao->pontos_recurso += 5;
-                faccao->pontos_poder += 1;
-            } else if (terreno == 'F') {
-                faccao->pontos_recurso += 15;
-                faccao->pontos_poder += 15;
-            } else if (terreno == 'M') {
-                // Montanha: sem pontos, mas permite movimento
-            }
-            area[faccao->x][faccao->y] = 'P';  // Supomos que facções sempre andam sobre planície antes
-            // Atualiza posição
-            faccao->x = novo_x;
-            faccao->y = novo_y;
-            area[novo_x][novo_y] = faccao->letra;
+    if (novo_x < 0 || novo_x >= n || novo_y < 0 || novo_y >= m) {
+        printf("Fora dos limites!\n");
+        return;
+    }
 
-        } else {
-            printf("Terreno ocupado por outra faccao.\n");
+    char destino = area[novo_x][novo_y];
+
+    if (destino == 'P' || destino == 'F' || destino == 'M') {
+        // Atualiza pontos
+        if (destino == 'P') {
+            f->pontos_recurso += 5;
+            f->pontos_poder += 1;
+        } else if (destino == 'F') {
+            f->pontos_recurso += 15;
+            f->pontos_poder += 15;
         }
+
+        // Atualiza mapa
+        area[f->x][f->y] = 'P'; // Deixa a antiga como planície
+        f->x = novo_x;
+        f->y = novo_y;
+        area[novo_x][novo_y] = f->letra;
+
+        printf("Movimentacao realizada!\n");
+
+        // Após movimento, permitir construção
+        adicionar_edificio(f, area, n, m);
     } else {
-        printf("Fora dos limites do mapa.\n");
+        printf("Terreno ocupado! Movimento cancelado.\n");
     }
 }
