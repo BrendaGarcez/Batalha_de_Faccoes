@@ -3,6 +3,14 @@
 #include <string.h>
 #include <time.h>
 
+#define RESET   "\033[0m"
+#define RED     "\033[1;31m"
+#define GREEN   "\033[1;32m"
+#define YELLOW  "\033[1;33m"
+#define BLUE    "\033[1;34m"
+#define MAGENTA "\033[1;35m"
+#define CYAN    "\033[1;36m"
+
 // Estruturas de representação
 typedef struct unidade {
     int x;
@@ -260,17 +268,31 @@ void mover_faccao(Tfaccao *faccao, char **area, int n, int m, int direcao) {
         case 2: novo_x++; break; // Baixo
         case 3: novo_y--; break; // Esquerda
         case 4: novo_y++; break; // Direita
-        default: return;
+        default: 
+            printf("Direcao Invalida. \n");
+            return;
     }
 
     if(novo_x >= 0 && novo_x < n && novo_y >= 0 && novo_y < m) {
-        if (area[novo_x][novo_y] == 'P') {
-            area[faccao->x][faccao->y] = 'P';  // Libera a antiga
+        char terreno = area[novo_x][novo_y];
+        if (terreno == 'P' || terreno == 'F' || terreno == 'M') {
+             if (terreno == 'P') {
+                faccao->pontos_recurso += 5;
+                faccao->pontos_poder += 1;
+            } else if (terreno == 'F') {
+                faccao->pontos_recurso += 15;
+                faccao->pontos_poder += 15;
+            } else if (terreno == 'M') {
+                // Montanha: sem pontos, mas permite movimento
+            }
+            area[faccao->x][faccao->y] = 'P';  // Supomos que facções sempre andam sobre planície antes
+            // Atualiza posição
             faccao->x = novo_x;
             faccao->y = novo_y;
             area[novo_x][novo_y] = faccao->letra;
+
         } else {
-            printf("Terreno invalido para movimentacao: %c\n", area[novo_x][novo_y]);
+            printf("Terreno ocupado por outra faccao.\n");
         }
     } else {
         printf("Fora dos limites do mapa.\n");
