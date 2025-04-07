@@ -11,6 +11,12 @@
 #define MAGENTA "\033[1;35m"
 #define CYAN    "\033[1;36m"
 
+#include <windows.h> // Para cores no Windows
+
+// Função para definir cor (apenas no Windows)
+void definir_cor(int cor) {
+    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), cor);
+}
 // Estruturas de representação
 typedef struct unidade {
     int x;
@@ -193,43 +199,56 @@ void distribuir_aleatoriamente(char **area, int n, int m) {
     }
 }
 
-/// Adicionar nova facção
-void adicionar_faccao(Tfaccao **lista_faccoes, char **area, int n, int m){
-    Tfaccao *nova_faccao = (Tfaccao *)malloc(sizeof(Tfaccao));
-    Tfaccao *ultimo = *lista_faccoes;
-    if (nova_faccao == NULL) {
-        printf("Erro ao alocar memoria.\n");
-        return;
+// Verifica se a letra já está em uso e conta quantas vezes foi usada
+int contar_letra_usada(Tfaccao *lista, char letra) {
+    int count = 0;
+    while (lista != NULL) {
+        if (lista->letra == letra) {
+            count++;
+        }
+        lista = lista->prox;
     }
+    return count;
+}
+
+void adicionar_faccao(Tfaccao **lista_faccoes, char **area, int n, int m){
+    Tfaccao *nova = (Tfaccao *)malloc(sizeof(Tfaccao));
+    if (!nova) return;
 
     printf("Digite o nome da faccao: ");
-    scanf("%s", nova_faccao->nome);
+    scanf("%s", nova->nome);
 
-    // Posicionamento aleatório em planície
+    nova->letra = nova->nome[0];  // Primeira letra do nome
+    int repeticoes = contar_letra_usada(*lista_faccoes, nova->letra);
+    int cor = 9 + repeticoes % 6; // Varia de 9 a 14 (cores diferentes)
+
     int x, y;
     do {
         x = rand() % n;
         y = rand() % m;
     } while (area[x][y] != 'P');
 
-    nova_faccao->x = x;
-    nova_faccao->y = y;
-    nova_faccao->letra = nova_faccao->nome[0];
-    area[x][y] = nova_faccao->letra;
-    nova_faccao->pontos_recurso = 24;
-    nova_faccao->pontos_poder = 0;
-    nova_faccao->prox = NULL;
-    nova_faccao->proxunidade = NULL;
-    nova_faccao->proxedificio = NULL;
-    nova_faccao->proxalianca = NULL;
+    nova->x = x;
+    nova->y = y;
+    nova->pontos_recurso = 24;
+    nova->pontos_poder = 0;
+    nova->prox = NULL;
+    nova->proxunidade = NULL;
+    nova->proxedificio = NULL;
+    nova->proxalianca = NULL;
 
+    area[x][y] = nova->letra;
+
+    // Salvar cor extra (usaremos um campo novo ou outra estrutura para isso)
+    // Aqui simplificado apenas para saída colorida na exibição
+
+    // Inserir na lista encadeada
     if (*lista_faccoes == NULL) {
-        *lista_faccoes = nova_faccao;
+        *lista_faccoes = nova;
     } else {
-        while (ultimo->prox != NULL) {
-            ultimo = ultimo->prox;
-        }
-        ultimo->prox = nova_faccao;
+        Tfaccao *temp = *lista_faccoes;
+        while (temp->prox != NULL) temp = temp->prox;
+        temp->prox = nova;
     }
 }
 
