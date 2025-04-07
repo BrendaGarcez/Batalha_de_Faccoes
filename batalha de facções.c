@@ -3,7 +3,7 @@
 #include <string.h>
 #include <time.h>
 
-// Estruturas de representação
+// Estruturas de representaÃ§Ã£o
 typedef struct unidade {
     int x;
     int y;
@@ -28,17 +28,19 @@ typedef struct faccao {
     char nome[15];
     int pontos_recurso;
     int pontos_poder;
+    int x, y; 
     struct faccao *prox;
     Tunidade *proxunidade;
     Tedificio *proxedificio;
     Taliancas *proxalianca;
 } Tfaccao;
 
-/// Funções
+/// FunÃ§Ãµes
 void distribuir_aleatoriamente(char **area, int n, int m);
 void exibir_faccoes(Tfaccao *lista_faccoes);
-void adicionar_faccao(Tfaccao **lista_faccoes);
+void adicionar_faccao(Tfaccao **lista_faccoes, char **area, int n, int m);
 void desalocar(char ***area, int n, int m);
+void mover_faccao(Tfaccao *faccao, char **area, int n, int m, int direcao);
 
 int main(){
     int n = 0, m = 0, i = 0, j = 0;
@@ -46,7 +48,7 @@ int main(){
     char **area;
 
     //// Criar a matriz
-    printf("\nInforme o tamanho da Matriz(colunas X linhas):\n");
+    printf("\nInforme o tamanho da Matriz (colunas X linhas):\n");
     scanf("%d %d", &n, &m);
 
     area = (char **)malloc(n * sizeof(char *));
@@ -56,18 +58,19 @@ int main(){
 
     distribuir_aleatoriamente(area, n, m);
 
-    ////Criar Facções
+    //// Criar FacÃ§Ãµes
     int t = 0;
     printf("Quantas faccoes deseja criar?\n");
     scanf("%d", &t);
-    for(int i = 0; i < t; i++){
-        adicionar_faccao(&faccoes);
+    for (int i = 0; i < t; i++) {
+        adicionar_faccao(&faccoes, area, n, m);
     }
 
-    system("cls");
+    system("cls || clear");  // cross-platform clear
     exibir_faccoes(faccoes);
 
-    printf("\n");
+    //// Mostrar mapa
+    printf("\nMapa Inicial:\n");
     for(i = 0; i < n; i++){
         for(j = 0; j < m; j++){
             printf(" %c", area[i][j]);
@@ -75,27 +78,51 @@ int main(){
         printf("\n");
     }
 
-
-    ////Lógica de movimentação
+    //// LÃ³gica de movimentaÃ§Ã£o
     int op = 0, op1 = 0;
-    while (op != 5) {  // Continua até que o usuário escolha "Exit" (5)
-        printf("O que deseja fazer agora?\n");
+    while (op != 5) {
+        printf("\nO que deseja fazer agora?\n");
         printf("1 - Avancar Terreno\n");
-        printf("5 - Exit\n");  // Opção para sair
+        printf("5 - Exit\n");
         scanf("%d", &op);
+
         switch(op) {
-            case 1:
+            case 1: {
+                Tfaccao *f = faccoes;
+                printf("Escolha a letra da faccao para mover:\n");
+                char letra_escolhida;
+                scanf(" %c", &letra_escolhida);
+
+                // Procurar facÃ§Ã£o pela letra
+                while (f && f->letra != letra_escolhida) {
+                    f = f->prox;
+                }
+
+                if (!f) {
+                    printf("Faccao nao encontrada.\n");
+                    break;
+                }
+
                 printf("Em qual direcao?\n");
-                printf("1 - Cima\n2 - Baixo\n3 - Esquerda\n4 - Direita\n5 - Exit\n");
+                printf("1 - Cima\n2 - Baixo\n3 - Esquerda\n4 - Direita\n5 - Cancelar\n");
                 scanf("%d", &op1);
 
                 if (op1 == 5) {
-                    printf("Saindo do movimento...\n");
+                    printf("Cancelando movimentacao...\n");
                 } else {
-                    printf("Movendo na direcao %d\n", op1);
-                    ////chama função de movimentação
+                    mover_faccao(f, area, n, m, op1);
+
+                    // Mostrar mapa atualizado
+                    printf("\nMapa Atualizado:\n");
+                    for(i = 0; i < n; i++){
+                        for(j = 0; j < m; j++){
+                            printf(" %c", area[i][j]);
+                        }
+                        printf("\n");
+                    }
                 }
                 break;
+            }
 
             case 5:
                 printf("Saindo do programa...\n");
@@ -107,13 +134,6 @@ int main(){
         }
     }
 
-
-
-
-
-
-
-
     //// Desalocar matriz
     desalocar(&area, n, m);
     if(area != NULL){
@@ -121,30 +141,31 @@ int main(){
     }
     return 0;
 }
-/////mapa com  disposição de tipos, floresta, montanha e planíces
+
+/// Mapa com disposiÃ§Ã£o aleatÃ³ria de tipos de terreno
 void distribuir_aleatoriamente(char **area, int n, int m) {
     int i, j;
     int total = n * m;
-    int qtd_p = total * 0.50;  // 50% de 'p'
-    int qtd_f = total * 0.30;  // 30% de 'f'
-    int qtd_m = total - qtd_p - qtd_f;  // 20% de 'm'
+    int qtd_p = total * 0.50;  // 50% planÃ­cies
+    int qtd_f = total * 0.30;  // 30% florestas
+    int qtd_m = total - qtd_p - qtd_f;  // 20% montanhas
 
     for (i = 0; i < n; i++) {
         for (j = 0; j < m; j++) {
-            area[i][j] = ' ';  // Inicializa com espaços em branco
+            area[i][j] = ' ';
         }
     }
-    srand(time(NULL));  // Inicializa a semente do gerador de números aleatórios
-    // Preenche a matriz com 'p'
+
+    srand(time(NULL));
     while (qtd_p > 0) {
         i = rand() % n;
         j = rand() % m;
-        if (area[i][j] == ' ') {  // Verifica se o espaço está vazio
+        if (area[i][j] == ' ') {
             area[i][j] = 'P';
             qtd_p--;
         }
     }
-    // Preenche a matriz com 'f'
+
     while (qtd_f > 0) {
         i = rand() % n;
         j = rand() % m;
@@ -153,7 +174,7 @@ void distribuir_aleatoriamente(char **area, int n, int m) {
             qtd_f--;
         }
     }
-    // Preenche a matriz com 'm'
+
     while (qtd_m > 0) {
         i = rand() % n;
         j = rand() % m;
@@ -164,29 +185,39 @@ void distribuir_aleatoriamente(char **area, int n, int m) {
     }
 }
 
-void adicionar_faccao(Tfaccao **lista_faccoes) {
+/// Adicionar nova facÃ§Ã£o
+void adicionar_faccao(Tfaccao **lista_faccoes, char **area, int n, int m){
     Tfaccao *nova_faccao = (Tfaccao *)malloc(sizeof(Tfaccao));
     Tfaccao *ultimo = *lista_faccoes;
-
     if (nova_faccao == NULL) {
         printf("Erro ao alocar memoria.\n");
         return;
     }
 
-    // Solicitar informações da nova facção
     printf("Digite o nome da faccao: ");
-    scanf("%s", nova_faccao->nome); // Limitar a 14 caracteres para deixar espaço para o terminador nulo
-    nova_faccao->letra = nova_faccao->nome[0];
-    nova_faccao->pontos_recurso = 24; // Inicializar com valor padrão
-    nova_faccao->pontos_poder = 0;   // Inicializar com valor padrão
-    nova_faccao->prox = NULL;        // Inicialmente, o próximo é NULL
+    scanf("%s", nova_faccao->nome);
 
-    // Adicionar a nova facção ao final da lista
+    // Posicionamento aleatÃ³rio em planÃ­cie
+    int x, y;
+    do {
+        x = rand() % n;
+        y = rand() % m;
+    } while (area[x][y] != 'P');
+
+    nova_faccao->x = x;
+    nova_faccao->y = y;
+    nova_faccao->letra = nova_faccao->nome[0];
+    area[x][y] = nova_faccao->letra;
+    nova_faccao->pontos_recurso = 24;
+    nova_faccao->pontos_poder = 0;
+    nova_faccao->prox = NULL;
+    nova_faccao->proxunidade = NULL;
+    nova_faccao->proxedificio = NULL;
+    nova_faccao->proxalianca = NULL;
+
     if (*lista_faccoes == NULL) {
-        // Se a lista estiver vazia, a nova facção se torna a cabeça da lista
         *lista_faccoes = nova_faccao;
     } else {
-        // Caso contrário, percorra a lista até o final e adicione a nova facção
         while (ultimo->prox != NULL) {
             ultimo = ultimo->prox;
         }
@@ -194,7 +225,7 @@ void adicionar_faccao(Tfaccao **lista_faccoes) {
     }
 }
 
-// Função para exibir a lista de facções
+/// Exibir facÃ§Ãµes
 void exibir_faccoes(Tfaccao *lista_faccoes) {
     Tfaccao *atual = lista_faccoes;
 
@@ -210,11 +241,38 @@ void exibir_faccoes(Tfaccao *lista_faccoes) {
     }
 }
 
+/// Libera memÃ³ria da matriz
 void desalocar(char ***area, int n, int m){
-    int i = 0;
-    for(i = 0; i < n; i++){
-        free((*area)[i]);  // Libera cada linha da matriz
+    for(int i = 0; i < n; i++){
+        free((*area)[i]);
     }
-    free(*area);  // Libera o ponteiro principal da matriz
-    *area = NULL;  // Define o ponteiro principal como NULL
+    free(*area);
+    *area = NULL;
+}
+
+/// Movimento de facÃ§Ã£o
+void mover_faccao(Tfaccao *faccao, char **area, int n, int m, int direcao) {
+    int novo_x = faccao->x;
+    int novo_y = faccao->y;
+
+    switch(direcao) {
+        case 1: novo_x--; break; // Cima
+        case 2: novo_x++; break; // Baixo
+        case 3: novo_y--; break; // Esquerda
+        case 4: novo_y++; break; // Direita
+        default: return;
+    }
+
+    if(novo_x >= 0 && novo_x < n && novo_y >= 0 && novo_y < m) {
+        if (area[novo_x][novo_y] == 'P') {
+            area[faccao->x][faccao->y] = 'P';  // Libera a antiga
+            faccao->x = novo_x;
+            faccao->y = novo_y;
+            area[novo_x][novo_y] = faccao->letra;
+        } else {
+            printf("Terreno invalido para movimentacao: %c\n", area[novo_x][novo_y]);
+        }
+    } else {
+        printf("Fora dos limites do mapa.\n");
+    }
 }
